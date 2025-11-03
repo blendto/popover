@@ -21,7 +21,6 @@ class PopoverItem extends StatefulWidget {
   final double contentDyOffset;
   final double contentDxOffset;
   final PopoverTransition transition;
-  final Curve popoverCurve;
 
   const PopoverItem({
     required this.child,
@@ -40,7 +39,6 @@ class PopoverItem extends StatefulWidget {
     this.contentDyOffset = 0,
     this.contentDxOffset = 0,
     super.key,
-    required this.popoverCurve,
   });
 
   @override
@@ -50,11 +48,6 @@ class PopoverItem extends StatefulWidget {
 class _PopoverItemState extends State<PopoverItem> {
   late Rect _attachRect;
   late BoxConstraints _constraints;
-
-  late final curvedAnimation = CurvedAnimation(
-    parent: widget.animation,
-    curve: widget.popoverCurve,
-  );
 
   @override
   Widget build(BuildContext context) {
@@ -66,11 +59,11 @@ class _PopoverItemState extends State<PopoverItem> {
           direction: widget.direction,
           arrowHeight: widget.arrowHeight,
           child: AnimatedBuilder(
-            animation: curvedAnimation,
+            animation: widget.animation,
             builder: (context, child) {
               return PopoverContext(
                 attachRect: _attachRect,
-                animation: curvedAnimation,
+                animation: widget.animation,
                 radius: widget.radius,
                 backgroundColor: widget.backgroundColor,
                 boxShadow: widget.boxShadow,

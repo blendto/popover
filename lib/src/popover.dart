@@ -128,6 +128,11 @@ Future<T?> showPopover<T extends Object?>({
     PopoverRoute<T>(
       allowClicksOnBackground: allowClicksOnBackground,
       pageBuilder: (_, animation, __) {
+        final curvedAnimation = CurvedAnimation(
+          parent: animation,
+          curve: popoverCurve,
+        );
+
         return PopScope(
           onPopInvokedWithResult: (didPop, _) => onPop?.call(),
           child: PopoverItem(
@@ -137,9 +142,8 @@ Future<T?> showPopover<T extends Object?>({
             backgroundColor: backgroundColor,
             direction: direction,
             radius: radius,
-            popoverCurve: popoverCurve,
             boxShadow: shadow,
-            animation: animation,
+            animation: curvedAnimation,
             arrowWidth: arrowWidth,
             arrowHeight: arrowHeight,
             constraints: constraints,
