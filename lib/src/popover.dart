@@ -137,6 +137,7 @@ Future<T?> showPopover<T extends Object?>({
             backgroundColor: backgroundColor,
             direction: direction,
             radius: radius,
+            popoverCurve: popoverCurve,
             boxShadow: shadow,
             animation: animation,
             arrowWidth: arrowWidth,
