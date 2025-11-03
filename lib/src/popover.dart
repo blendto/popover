@@ -91,7 +91,6 @@ Future<T?> showPopover<T extends Object?>({
   Color backgroundColor = const Color(0x8FFFFFFFF),
   Color barrierColor = const Color(0x80000000),
   Duration transitionDuration = const Duration(milliseconds: 200),
-  Curve popoverCurve = Curves.easeIn,
   double radius = 8,
   List<BoxShadow> shadow = const [
     BoxShadow(color: Color(0x1F000000), blurRadius: 5),
@@ -128,11 +127,6 @@ Future<T?> showPopover<T extends Object?>({
     PopoverRoute<T>(
       allowClicksOnBackground: allowClicksOnBackground,
       pageBuilder: (_, animation, __) {
-        final curvedAnimation = CurvedAnimation(
-          parent: animation,
-          curve: popoverCurve,
-        );
-
         return PopScope(
           onPopInvokedWithResult: (didPop, _) => onPop?.call(),
           child: PopoverItem(
@@ -143,7 +137,7 @@ Future<T?> showPopover<T extends Object?>({
             direction: direction,
             radius: radius,
             boxShadow: shadow,
-            animation: curvedAnimation,
+            animation: animation,
             arrowWidth: arrowWidth,
             arrowHeight: arrowHeight,
             constraints: constraints,
@@ -165,11 +159,7 @@ Future<T?> showPopover<T extends Object?>({
       settings: routeSettings,
       transitionBuilder: (builderContext, animation, _, child) {
         return popoverTransitionBuilder == null
-            ? _FadeTransitionWidget(
-                child: child,
-                animation: animation,
-                curve: popoverCurve,
-              )
+            ? _FadeTransitionWidget(child: child, animation: animation)
             : popoverTransitionBuilder(animation, child);
       },
     ),
@@ -177,14 +167,9 @@ Future<T?> showPopover<T extends Object?>({
 }
 
 class _FadeTransitionWidget extends StatefulWidget {
-  const _FadeTransitionWidget({
-    required this.child,
-    required this.animation,
-    required this.curve,
-  });
+  const _FadeTransitionWidget({required this.child, required this.animation});
   final Widget child;
   final Animation<double> animation;
-  final Curve curve;
 
   @override
   State<_FadeTransitionWidget> createState() => _FadeTransitionWidgetState();
@@ -196,7 +181,10 @@ class _FadeTransitionWidgetState extends State<_FadeTransitionWidget> {
   @override
   void initState() {
     super.initState();
-    _animation = CurvedAnimation(parent: widget.animation, curve: widget.curve);
+    _animation = CurvedAnimation(
+      parent: widget.animation,
+      curve: Curves.easeOut,
+    );
   }
 
   @override
