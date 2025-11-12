@@ -119,10 +119,12 @@ PopoverController<T> showPopover<T extends Object?>({
   Color backgroundColor = const Color(0x8FFFFFFFF),
   Color barrierColor = const Color(0x80000000),
   Duration transitionDuration = const Duration(milliseconds: 200),
+  Curve curve = Curves.linear,
   double radius = 8,
   List<BoxShadow> shadow = const [
     BoxShadow(color: Color(0x1F000000), blurRadius: 5),
   ],
+  bool openImmediately = true,
   double arrowWidth = 24,
   double arrowHeight = 12,
   double arrowDxOffset = 0,
@@ -157,14 +159,14 @@ PopoverController<T> showPopover<T extends Object?>({
       return PopScope(
         onPopInvokedWithResult: (didPop, _) => onPop?.call(),
         child: PopoverItem(
-          transition: transition,
+          transition: PopoverTransition.scale,
           child: Builder(builder: bodyBuilder),
           context: context,
           backgroundColor: backgroundColor,
           direction: direction,
           radius: radius,
           boxShadow: shadow,
-          animation: animation,
+          animation: animation.drive(CurveTween(curve: curve)),
           arrowWidth: arrowWidth,
           arrowHeight: arrowHeight,
           constraints: constraints,
@@ -185,14 +187,15 @@ PopoverController<T> showPopover<T extends Object?>({
     transitionDuration: transitionDuration,
     settings: routeSettings,
     transitionBuilder: (builderContext, animation, _, child) {
-      return popoverTransitionBuilder == null
-          ? _FadeTransitionWidget(child: child, animation: animation)
-          : popoverTransitionBuilder(animation, child);
+      return popoverTransitionBuilder?.call(animation, child) ??
+          _FadeTransitionWidget(child: child, animation: animation);
     },
   );
 
-  final controller = PopoverController(context: context, popoverRoute: route)
-    ..show();
+  final controller = PopoverController(context: context, popoverRoute: route);
+  if (openImmediately) {
+    controller.show();
+  }
   return controller;
 }
 
@@ -213,7 +216,7 @@ class _FadeTransitionWidgetState extends State<_FadeTransitionWidget> {
     super.initState();
     _animation = CurvedAnimation(
       parent: widget.animation,
-      curve: Curves.easeOut,
+      curve: Curves.elasticInOut,
     );
   }
 
