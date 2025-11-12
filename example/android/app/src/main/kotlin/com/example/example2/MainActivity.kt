@@ -1,4 +1,4 @@
-package com.example.example2
+package me.minikin.example
 
 import io.flutter.embedding.android.FlutterActivity
 
