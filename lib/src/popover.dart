@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import 'popover_direction.dart';
@@ -5,6 +7,32 @@ import 'popover_item.dart';
 import 'popover_route.dart';
 import 'popover_transition.dart';
 import 'utils/popover_utils.dart';
+
+class PopoverController<T> {
+  final PopoverRoute<T> popoverRoute;
+
+  final BuildContext context;
+
+  PopoverController({required this.context, required this.popoverRoute});
+
+  bool get isActive => popoverRoute.isActive;
+
+  Future<T?> waitUntilComplete() {
+    return popoverRoute.completed;
+  }
+
+  Future<T?> show() async {
+    final result = await Navigator.of(
+      context,
+      rootNavigator: true,
+    ).push(popoverRoute);
+    return result;
+  }
+
+  void remove() {
+    Navigator.of(context, rootNavigator: true).removeRoute(popoverRoute);
+  }
+}
 
 /// A popover is a transient view that appears above other content onscreen
 /// when you tap a control or in an area.
@@ -83,7 +111,7 @@ import 'utils/popover_utils.dart';
 ///
 ///The `popoverBuilder` is used for transition builder
 
-Future<T?> showPopover<T extends Object?>({
+PopoverController<T> showPopover<T extends Object?>({
   required BuildContext context,
   required WidgetBuilder bodyBuilder,
   PopoverDirection direction = PopoverDirection.bottom,
@@ -91,10 +119,12 @@ Future<T?> showPopover<T extends Object?>({
   Color backgroundColor = const Color(0x8FFFFFFFF),
   Color barrierColor = const Color(0x80000000),
   Duration transitionDuration = const Duration(milliseconds: 200),
+  Curve curve = Curves.linear,
   double radius = 8,
   List<BoxShadow> shadow = const [
     BoxShadow(color: Color(0x1F000000), blurRadius: 5),
   ],
+  bool openImmediately = true,
   double arrowWidth = 24,
   double arrowHeight = 12,
   double arrowDxOffset = 0,
@@ -123,47 +153,50 @@ Future<T?> showPopover<T extends Object?>({
             BoxConstraints.tightFor(width: width, height: height)
       : constraints;
 
-  return Navigator.of(context, rootNavigator: true).push<T>(
-    PopoverRoute<T>(
-      allowClicksOnBackground: allowClicksOnBackground,
-      pageBuilder: (_, animation, __) {
-        return PopScope(
-          onPopInvokedWithResult: (didPop, _) => onPop?.call(),
-          child: PopoverItem(
-            transition: transition,
-            child: Builder(builder: bodyBuilder),
-            context: context,
-            backgroundColor: backgroundColor,
-            direction: direction,
-            radius: radius,
-            boxShadow: shadow,
-            animation: animation,
-            arrowWidth: arrowWidth,
-            arrowHeight: arrowHeight,
-            constraints: constraints,
-            arrowDxOffset: arrowDxOffset,
-            arrowDyOffset: arrowDyOffset,
-            contentDyOffset: contentDyOffset,
-            contentDxOffset: contentDxOffset,
-            key: key,
-          ),
-        );
-      },
-      requestFocus: requestFocus,
-      barrierDismissible: barrierDismissible,
-      barrierLabel:
-          barrierLabel ??
-          MaterialLocalizations.of(context).modalBarrierDismissLabel,
-      barrierColor: barrierColor,
-      transitionDuration: transitionDuration,
-      settings: routeSettings,
-      transitionBuilder: (builderContext, animation, _, child) {
-        return popoverTransitionBuilder == null
-            ? _FadeTransitionWidget(child: child, animation: animation)
-            : popoverTransitionBuilder(animation, child);
-      },
-    ),
+  final route = PopoverRoute<T>(
+    allowClicksOnBackground: allowClicksOnBackground,
+    pageBuilder: (_, animation, __) {
+      return PopScope(
+        onPopInvokedWithResult: (didPop, _) => onPop?.call(),
+        child: PopoverItem(
+          transition: PopoverTransition.scale,
+          child: Builder(builder: bodyBuilder),
+          context: context,
+          backgroundColor: backgroundColor,
+          direction: direction,
+          radius: radius,
+          boxShadow: shadow,
+          animation: animation.drive(CurveTween(curve: curve)),
+          arrowWidth: arrowWidth,
+          arrowHeight: arrowHeight,
+          constraints: constraints,
+          arrowDxOffset: arrowDxOffset,
+          arrowDyOffset: arrowDyOffset,
+          contentDyOffset: contentDyOffset,
+          contentDxOffset: contentDxOffset,
+          key: key,
+        ),
+      );
+    },
+    requestFocus: requestFocus,
+    barrierDismissible: barrierDismissible,
+    barrierLabel:
+        barrierLabel ??
+        MaterialLocalizations.of(context).modalBarrierDismissLabel,
+    barrierColor: barrierColor,
+    transitionDuration: transitionDuration,
+    settings: routeSettings,
+    transitionBuilder: (builderContext, animation, _, child) {
+      return popoverTransitionBuilder?.call(animation, child) ??
+          _FadeTransitionWidget(child: child, animation: animation);
+    },
   );
+
+  final controller = PopoverController(context: context, popoverRoute: route);
+  if (openImmediately) {
+    controller.show();
+  }
+  return controller;
 }
 
 class _FadeTransitionWidget extends StatefulWidget {
@@ -183,7 +216,7 @@ class _FadeTransitionWidgetState extends State<_FadeTransitionWidget> {
     super.initState();
     _animation = CurvedAnimation(
       parent: widget.animation,
-      curve: Curves.easeOut,
+      curve: Curves.elasticInOut,
     );
   }
 

@@ -85,13 +85,11 @@ class ListItems extends StatelessWidget {
         children: [
           InkWell(
             onTap: () {
-              Navigator.of(context)
-                ..pop()
-                ..push(
-                  MaterialPageRoute<SecondRoute>(
-                    builder: (context) => SecondRoute(),
-                  ),
-                );
+              Navigator.of(context)..push(
+                MaterialPageRoute<SecondRoute>(
+                  builder: (context) => SecondRoute(),
+                ),
+              );
             },
             child: Container(
               height: 50,
